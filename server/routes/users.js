@@ -6,9 +6,10 @@ const bcrypt = require("bcrypt");
 const auth = require("../middleware/auth");
 
 async function getUsers() {
-  return await User.find()
+  const user = await User.find()
       .select(["_id", "name", "email"])
       .sort("title")
+  return user
 }
 
 async function createUser(user) {
@@ -53,7 +54,9 @@ router.delete("/:id", auth, (req, res) => {
 
 router.post("/", (req, res) => {
   const { error } = validate(req.body);
-  if (error) return res.status(400).send(error.details[0].message);
+  if (error) {
+    logValidationError(error.details[0].message, `Unable to create user`, res, 400);
+  }
   User.findOne({ email: req.body.email })
     .then(user => {
       if (user) return res.status(400).send(`'User' already registered`);
@@ -74,8 +77,19 @@ router.post("/", (req, res) => {
 });
 
 function logServerErrorAndRespond(err, friendlyMessage, res, statusCode = 500) {
-  console.log(friendlyMessage, err);
-  res.status(statusCode).send(`${friendlyMessage}: ${err.message}`);
+  const error = {
+    code: statusCode,
+    message: `${friendlyMessage}: ${err.message}`
+  }
+  res.status(statusCode).send(error);
+}
+
+function logValidationError(err, friendlyMessage, res, statusCode = 500) {
+  const error = {
+    code: statusCode,
+    message: `${friendlyMessage}: ${err.replace(/"/g, "")}`
+  }
+  res.status(statusCode).send(error);
 }
 
 module.exports = {

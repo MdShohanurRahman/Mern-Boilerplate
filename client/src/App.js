@@ -9,7 +9,6 @@ function App() {
 
   const refresh = refreshToken => {
     console.log("Refreshing token!");
-
     return new Promise((resolve, reject) => {
       axios
           .post("/api/auth/refresh", { token: refreshToken })
